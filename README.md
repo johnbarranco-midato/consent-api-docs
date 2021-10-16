@@ -24,7 +24,7 @@ GET [base]/Consent/$status?patientIdentifier={organizationURL}|{patientId}&categ
 The response returns the status of the _latest_ record for the given type of consent for the specified patient. So, if there are multiple records corresponding to this patient and this type of consent, the status of the most recent consent record is returned. If no such consent exists the response will be an `HTTP 404`.
 
 
-Response Examples:
+The response is a FHIR Parameter resource similar to the following:
 
 ```json
 {
@@ -65,7 +65,7 @@ Retrieve the full Consent object.
 GET [base]/Consent/{consentId}
 ```
 
-The response is a [FHIR Consent object](#fhir-consent-object-samples) if it exists and `HTTP 404` is it does not exist.
+The response is a [FHIR Consent object](#fhir-consent-object-samples) if the consent exists, or `HTTP 404` if it does not exist.
 
 ### Retrieve All Consent for a Patient
 Retrieve all Consent objects corresponding to a patient. The request can optionally specify a consent type (by providing a `formId`):
@@ -82,7 +82,7 @@ The response is a [FHIR Bundle object](#fhir-bundle-object-samples) containing z
 GET [base]/Consent/{consentId}?_format=pdf
 ```
 
-Response: PDF binary blob.
+The response is a human-readable PDF binary blob if the consent exists, or `HTTP 404` if it does not exist.
 
 ## Updates
 
