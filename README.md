@@ -11,11 +11,41 @@ TBD
 
 TBD
 
+## Basic Concepts
+
+### Patient Identification
+Midato Health Consent API enables clients to specify patients by their own local identifier. This makes it more straightforward to integrate consent API calls with clients' local workflows so that clients do not have to store and track Midato's native IDs for each patient on their end. 
+
+Following FHIR data structures, when the patient identifier is given as a full JSON object (such as parameters in the body of a `POST` call), it should be provided as the following:
+```json
+{
+  "system": "{organizationURL}",
+  "value": "{patientId}"
+}
+```
+
+When provided as a path parameter value, a fully-qualified client-side patient identifier is constructed by client organization's URL, followed by the vertical slash (`|`), followed by the patient identifier; i.e., `{organizationURL}|{patientId}`. 
+
+For example, a patient identified by the ID `123456` at a hypothetical organization with the URL `https://sample-ehealth.com` will be identified as the following in Midato Consent API calls:
+
+As full JSON object:
+```json
+{
+  "system": "https://sample-ehealth.com/",
+  "value": "123456"
+}
+```
+As a path parameter value:
+```
+https://sample-ehealth.com|123456
+```
+
+
 ## Queries
 
 ### Check Consent Status for a Patient
 
-Check the status of the consent of a certain type (specified by `formId`) for a given patient (specified by the client organization's patient identifier in the form of organization's URL followed by the vertical slash followed by the patient identifier, e.g., `organizationURL|patientId`):
+Check the status of the consent of a certain type (specified by `formId`) for a given patient, identified by providing a [fully qualified client-side identifier](#patient-identification) as a path parameter value:
 
 ```
 GET [base]/Consent/$status?patientIdentifier={organizationURL}|{patientId}&category={formId}
@@ -108,6 +138,102 @@ The response is:
 - `HTTP 400` if there is a consent identified by `consentId` but its status is not `inactive`.
 - `HTTP 404` if there is no consent identified by `consentId`.
 
+## Consent Management Transactions
+
+### Initiate Consent Capture for an Existing Patient
+This call initiates capturing a consent for a patient. The consent type is specified by the `formId` and the patient is specified by a [fully qualified client-side identifier](#patient-identification) as a JSON object parameter value.
+
+```
+POST [base]/Consent/$capture
+```
+The body of the request is a FHIR Parameter object similar to the following:
+```json
+{
+  "resourceType" : "Parameters",
+  "parameter" : [
+    {
+      "name" : "patientIdentifier",
+      "valueIdentifier" : {
+        "system": "{organizationURL}",
+        "value": "{patientId}"
+      }
+    },
+    {
+      "name" : "consentType",
+      "valueString" : "{formId}"
+    }
+  ]
+}
+```
+
+The response returns a [FHIR Consent objects](#fhir-consent-object-samples) in `draft` status. The client may store the `consentId` from this object in order to check the status of the consent or retrieve it later.
+
+The response returns an `HTTP 400` if the patient is not recognizable or the form identifier is unknown. 
+
+### Initiate Consent Capture for a New Patient
+Similar to the above, this call also initiates capturing a consent but for a patient who is not currently known and is introduced by the request. In other words, this call creates a new patient and immediately initiates capturing a consent for this patient.
+
+The patient should be provided as a [FHIR Patient object](#fhir-patient-object-samples) and must include: 
+- the `identifier` attribute including the client-side patient identifier.
+- the `name` attribute including the patient's full name. 
+- the `telecom` attributes with at least one communication method (phone number or email address) to be used by the consent capturing process. If more than one `telecom` option is provided, the `rank` attribute should be provided to specify the order of preference.
+ 
+The consent type is specified by the `formId`.
+
+```
+POST [base]/Consent/$capture
+```
+The body of the request is a FHIR Parameter object similar to the following:
+```json
+{
+  "resourceType" : "Parameters",
+  "parameter" : [
+    {
+      "name" : "patient",
+      "valuePatient" : {
+        "resourceType": "Patient",
+        "identifier": [
+          {
+            "system": "https://sample-ehealth.com/",
+            "value": "123456"
+          }
+        ],
+        "name": [
+          {
+            "family": "Doe",
+            "given": ["John"]
+          }
+        ],
+        "gender": "male",
+        "birthDate": "1986-05-17",
+        "telecom": [
+          {
+            "system": "phone",
+            "value": "(03) 5555 6473",
+            "use": "mobile",
+            "rank": 1
+          },
+          {
+            "system": "email",
+            "value": "john@doe.org",
+            "rank": 2
+          }
+        ]
+      }
+  },
+  {
+    "name" : "consentType",
+    "valueString" : "{formId}"
+  }]
+}
+```
+
+The response returns a [FHIR Consent objects](#fhir-consent-object-samples) in `draft` status. The client may store the `consentId` from this object in order to check the status of the consent or retrieve it later.
+
+If the patient with the client-side fully-qualified identifier already exists, this call will update the communication details and initiates the consent capture.
+
+The response returns an `HTTP 400` if the form identifier is unknown. 
+
 ## Data Objects
 ### FHIR Consent Object Samples
 
@@ -170,21 +296,22 @@ FHIR Consent Object Sample with Contained Patient:
       ],
       "name": [
         {
-          "use": "official",
-          "family": "John",
-          "given": ["Doe"]
+          "family": "Doe",
+          "given": ["John"]
         }
       ],
       "gender": "male",
       "birthDate": "1986-05-17",
-      "address": [
-        {
-          "use": "home",
-          "line": ["1234 Main Street"],
-          "city": "Vancouver",
-          "postalCode": "V2H1Y3",
-          "country": "CAD"
-        }
+      "telecom": [
+          {
+            "system": "phone",
+            "value": "(03) 5555 6473",
+            "use": "mobile"
+          },
+          {
+            "system": "email",
+            "value": "john@doe.org"
+          }
       ]
     }
   ],
@@ -243,5 +370,39 @@ Empty bundle:
   "resourceType": "Bundle",
   "type": "searchset",
   "total": 0
+}
+```
+
+### FHIR Patient Object Samples
+```json
+{
+  "resourceType": "Patient",
+  "identifier": [
+    {
+      "system": "https://sample-ehealth.com/",
+      "value": "123456"
+    }
+  ],
+  "name": [
+    {
+      "family": "Doe",
+      "given": ["John"]
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1986-05-17",
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "(03) 5555 6473",
+      "use": "mobile",
+      "rank": 1
+    },
+    {
+      "system": "email",
+      "value": "john@doe.org",
+      "rank": 2
+    }
+  ]
 }
 ```
