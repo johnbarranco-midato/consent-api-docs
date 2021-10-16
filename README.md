@@ -1,7 +1,7 @@
 # Midato Consent API
 
-This document defines the API for access to Midato Consent Management System.
-(in-progress draft).
+This document defines the API for access to Midato Consent Management System. The API is broadly based on and compliant with [HL7 FHIR](https://www.hl7.org/fhir) with custom operations defined to facilitate consent management by providing short-hands that fit common use-cases.
+(This document is an in-progress draft).
 
 ## Base
 
