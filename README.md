@@ -52,7 +52,7 @@ The meaning of the status values are as the following:
 Check the status of a consent (identified by `consentId`). 
 
 ```
-GET [base]/Consent/{consentId}/$valid
+GET [base]/Consent/{consentId}/$status
 ```
 
 The response is similar to the [above](#check-consent-status-for-a-patient).
