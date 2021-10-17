@@ -101,7 +101,7 @@ The response is a [FHIR Consent object](#fhir-consent-object-samples) if the con
 Retrieve all Consent objects corresponding to a patient. The request can optionally specify a consent type (by providing a `formId`):
 
 ```
-GET [base]/Consent?patientIdentifier={organizationURL}|{patientId}&category={formId}
+GET [base]/Consent?_query=retrieveByPatient&patientIdentifier={organizationURL}|{patientId}&category={formId}
 ```
 
 The response is a [FHIR Bundle object](#fhir-bundle-object-samples) containing zero or more [FHIR Consent objects](#fhir-consent-object-samples).
