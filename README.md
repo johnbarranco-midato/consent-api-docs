@@ -14,7 +14,7 @@ TBD
 ## Basic Concepts
 
 ### Patient Identification
-Midato Health Consent API enables clients to specify patients by their own local identifier. This makes it more straightforward to integrate consent API calls with clients' local workflows so that clients do not have to store and track Midato's native IDs for each patient on their end. 
+Midato Health Consent API enables clients to identify patients using their own local identifier, so that clients do not have to store and track Midato's native IDs for each patient on their end. This makes the integration of clients' local workflows with the Consent API more straightforward.
 
 Following FHIR data structures, when the patient identifier is given as a full JSON object (such as parameters in the body of a `POST` call), it should be provided as the following:
 ```json
